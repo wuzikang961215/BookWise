@@ -28,3 +28,6 @@ venv/
 # Coverage reports
 htmlcov/
 coverage.xml
+
+# Database
+pgdata/
