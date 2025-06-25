@@ -1,0 +1,12 @@
+2025-06-25 20:32:35.787 AEST [4319] LOG:  starting PostgreSQL 14.17 (Homebrew) on aarch64-apple-darwin23.6.0, compiled by Apple clang version 16.0.0 (clang-1600.0.26.6), 64-bit
+2025-06-25 20:32:35.788 AEST [4319] LOG:  listening on IPv6 address "::1", port 5432
+2025-06-25 20:32:35.788 AEST [4319] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2025-06-25 20:32:35.788 AEST [4319] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2025-06-25 20:32:35.790 AEST [4320] LOG:  database system was shut down at 2025-06-25 20:32:29 AEST
+2025-06-25 20:32:35.791 AEST [4319] LOG:  database system is ready to accept connections
+2025-06-25 20:32:46.657 AEST [4357] FATAL:  role "bookwise_user" does not exist
+2025-06-25 20:33:55.504 AEST [4374] ERROR:  database "bookwise" already exists
+2025-06-25 20:33:55.504 AEST [4374] STATEMENT:  CREATE DATABASE bookwise OWNER bookwise_user;
+2025-06-25 20:34:44.223 AEST [4440] ERROR:  relation "merchants" does not exist
+2025-06-25 20:34:44.223 AEST [4440] STATEMENT:  ALTER TABLE merchants ADD UNIQUE (user_id)
+2025-06-25 20:36:34.681 AEST [4553] FATAL:  database "bookwise_user" does not exist
