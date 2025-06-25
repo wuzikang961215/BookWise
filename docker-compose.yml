@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:13
+    container_name: bookwise-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: bookwise_user
+      POSTGRES_PASSWORD: bookwise_pass
+      POSTGRES_DB: bookwise
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    restart: always

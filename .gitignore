@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtualenv
+venv/
+.env
+
+# VSCode
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Uvicorn log
+*.log
+
+# SQLite (if used locally)
+*.sqlite3
+
+# Pytest cache
+.pytest_cache/
+
+# Coverage reports
+htmlcov/
+coverage.xml
