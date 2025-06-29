@@ -12,6 +12,13 @@ class PaymentStatus(enum.Enum):
     failed = "failed"
     refunded = "refunded"
 
+class PaymentMethod(enum.Enum):
+    credit_card = "credit_card"
+    paypal = "paypal"
+    alipay = "alipay"
+    wechat_pay = "wechat_pay"
+    apple_pay = "apple_pay"
+
 class UserRole(enum.Enum):
     user = "user"
     merchant = "merchant"
@@ -83,7 +90,6 @@ class Slot(Base):
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
     capacity = Column(Integer, nullable=False)
-    booked_count = Column(Integer, nullable=False, default=0)
     
     theme = relationship("Theme", back_populates="slots")
     bookings = relationship("Booking", back_populates="slot")
@@ -113,8 +119,9 @@ class Payment(Base):
     booking_id = Column(String, ForeignKey("bookings.id"), nullable=False)
     user_id = Column(String, ForeignKey("users.id"), nullable=False)
     amount = Column(Numeric, nullable=False)
-    method = Column(String)  # e.g. credit_card, paypal, mock
+    method = Column(Enum(PaymentMethod), nullable=False)
     status = Column(Enum(PaymentStatus), default=PaymentStatus.pending)
+    payment_intent_id = Column(String, nullable=True, unique=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="payments")

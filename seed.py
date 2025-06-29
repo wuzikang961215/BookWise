@@ -3,152 +3,116 @@ from sqlalchemy.orm import Session
 from faker import Faker
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from app.models.models import Base, User, Merchant, Theme, Slot, MerchantCategory
 from app.db import get_db
-from app.models.models import (
-    Base, User, Merchant, Theme, Slot,
-    Booking, Payment, Review, PaymentStatus
-)
 from dotenv import load_dotenv
 import os, random
+import requests
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
+REGISTER_URL = "http://127.0.0.1:8000/api/auth/register"
+
 engine = create_engine(DATABASE_URL)
 fake = Faker()
 
-def generate_unique_users(count, start_index=162050):
-    users = []
-    for i in range(count):
-        index = i + start_index
-        users.append(User(
-            id=str(uuid4()),
-            username=f"user_{index}",
-            email=f"user_{index}@example.com",
-            is_merchant=False,
-            created_at=datetime.utcnow()
-        ))
-    return users
-
-
-
-# ✅ 批量插入预订 + 支付 + 评论
-def bulk_insert_bookings_and_payments(session, users, slots, batch_size=5000, total=100000):
-    bookings, payments, reviews = [], [], []
-    statuses = ["pending", "confirmed", "cancelled"]
-    methods = ["credit_card", "paypal", "mock"]
-    payment_statuses = list(PaymentStatus)
-
-    for i in range(total):
-        user = random.choice(users)
-        slot = random.choice(slots)
-        booking_id = str(uuid4())
-        created = datetime.now(timezone.utc) - timedelta(days=random.randint(1, 180))
-
-        bookings.append({
-            "id": booking_id,
-            "user_id": user.id,
-            "slot_id": slot.id,
-            "status": random.choice(statuses),
-            "created_at": created
+def register_user(username, email, password="Test1234!"):
+    try:
+        res = requests.post(REGISTER_URL, json={
+            "username": username,
+            "email": email,
+            "password": password
         })
-        payments.append({
-            "id": str(uuid4()),
-            "booking_id": booking_id,
-            "user_id": user.id,
-            "amount": Decimal(random.randint(10, 100)),
-            "method": random.choice(methods),
-            "status": random.choice(payment_statuses),
-            "created_at": created
-        })
-        if random.random() < 0.5:
-            reviews.append({
-                "id": str(uuid4()),
-                "user_id": user.id,
-                "theme_id": slot.theme_id,
-                "rating": random.randint(3, 5),
-                "comment": fake.sentence(),
-                "created_at": created
-            })
+        if res.status_code in (200, 201):
+            print(f"✅ Registered {email}")
+            return res.json().get("id")
+        else:
+            print(f"❌ Failed to register {email} ({res.status_code}): {res.text}")
+            return None
+    except Exception as e:
+        print(f"❌ Exception during registration for {email}: {e}")
+        return None
 
-        if i % batch_size == 0 and i > 0:
-            session.bulk_insert_mappings(Booking, bookings)
-            session.bulk_insert_mappings(Payment, payments)
-            session.bulk_insert_mappings(Review, reviews)
-            session.commit()
-            bookings.clear()
-            payments.clear()
-            reviews.clear()
+def seed_users_and_merchants(session, user_count=300, merchant_count=150, themes_per_merchant=6, slots_per_theme=12):
+    fake.unique.clear()
 
-    if bookings:
-        session.bulk_insert_mappings(Booking, bookings)
-        session.bulk_insert_mappings(Payment, payments)
-        session.bulk_insert_mappings(Review, reviews)
-        session.commit()
+    # Create regular users
+    user_ids = []
+    for _ in range(user_count):
+        name = fake.unique.first_name()
+        username = f"{name.lower()}_{uuid4().hex[:4]}"
+        email = f"{username}@example.com"
+        user_id = register_user(username, email)
+        if user_id:
+            user_ids.append(user_id)
+    print(f"✅ Created {len(user_ids)} users")
 
-
-def seed_all(session, user_count=10000, merchant_count=200, themes_per_merchant=10, slots_per_theme=10):
-    # ✅ 用户
-    users = generate_unique_users(user_count)
-    session.bulk_save_objects(users)
-    session.commit()
-
-    # ✅ 商户 + 商户用户
+    # Create merchants and update user role
     merchants = []
-    for i in range(merchant_count):
-        merchant_user = User(
-            id=str(uuid4()),
-            username=f"{fake.user_name()}_merchant_{i}",
-            email=f"{fake.email().split('@')[0]}_merchant_{i}@example.com",
-            is_merchant=True,
-            created_at=datetime.now(timezone.utc)
-        )
-        merchant = Merchant(
-            id=str(uuid4()),
-            user_id=merchant_user.id,
-            name=fake.company(),
-            description=fake.catch_phrase(),
-            location=fake.city()
-        )
-        users.append(merchant_user)
-        merchants.append(merchant)
-        session.add_all([merchant_user, merchant])
+    merchant_user_ids = []
+    for _ in range(merchant_count):
+        name = fake.unique.company()
+        username = f"{name.lower().replace(' ', '_')}_{uuid4().hex[:4]}"
+        email = f"{username}@merchant.com"
+        user_id = register_user(username, email)
+        if user_id:
+            merchant = Merchant(
+                id=str(uuid4()),
+                user_id=user_id,
+                name=name,
+                description=fake.catch_phrase(),
+                location=fake.city(),
+                category=random.choice(list(MerchantCategory))
+            )
+            session.add(merchant)
+            merchants.append(merchant)
+            merchant_user_ids.append(user_id)
     session.commit()
+    print(f"✅ Created {len(merchants)} merchants")
 
-    # ✅ 主题
+    # ✅ Update role to 'merchant' for relevant users
+    if merchant_user_ids:
+        session.query(User).filter(User.id.in_(merchant_user_ids)).update(
+            {User.role: 'merchant'}, synchronize_session=False
+        )
+        session.commit()
+        print(f"✅ Updated {len(merchant_user_ids)} users to role='merchant'")
+
+    # Create themes
     themes = []
     for merchant in merchants:
         for _ in range(themes_per_merchant):
             theme = Theme(
                 id=str(uuid4()),
                 merchant_id=merchant.id,
-                title=fake.bs().title(),
-                description=fake.text()
+                title=fake.sentence(nb_words=3).rstrip('.'),
+                description=fake.text(max_nb_chars=150)
             )
-            themes.append(theme)
             session.add(theme)
+            themes.append(theme)
     session.commit()
+    print(f"✅ Created {len(themes)} themes")
 
-    # ✅ 时段
+    # Create slots
     slots = []
+    now = datetime.now(timezone.utc)
     for theme in themes:
         for _ in range(slots_per_theme):
+            start = now + timedelta(days=random.randint(7, 60), hours=random.randint(8, 20))
             slot = Slot(
                 id=str(uuid4()),
                 theme_id=theme.id,
-                start_time=datetime.now(timezone.utc) + timedelta(days=random.randint(1, 60)),
-                capacity=random.randint(5, 15)
+                start_time=start,
+                end_time=start + timedelta(hours=1),
+                capacity=random.randint(6, 20)
             )
-            slots.append(slot)
             session.add(slot)
+            slots.append(slot)
     session.commit()
-
-    # ✅ 插入预订、支付、评论
-    bulk_insert_bookings_and_payments(session, users, slots, total=100000)
-
+    print(f"✅ Created {len(slots)} slots")
 
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)
-    db = next(get_db())
-    seed_all(db)
-    print("✅ Done seeding all data.")
+    with next(get_db()) as db:
+        seed_users_and_merchants(db)
+    print("✅ Done seeding users, merchants, themes, and slots.")

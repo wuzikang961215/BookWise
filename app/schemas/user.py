@@ -20,4 +20,4 @@ class UserOut(BaseModel):
     role: UserRole
 
     class Config:
-        orm_mode = True  # or "model_config = {'from_attributes': True}" for Pydantic v2
+        from_attributes = True # or "model_config = {'from_attributes': True}" for Pydantic v2

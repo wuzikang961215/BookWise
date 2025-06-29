@@ -10,4 +10,4 @@ class SlotOut(BaseModel):
     booked_count: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
