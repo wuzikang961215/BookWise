@@ -10,11 +10,16 @@ import os, random
 import requests
 
 load_dotenv()
+
 DATABASE_URL = os.getenv("DATABASE_URL")
-REGISTER_URL = "http://127.0.0.1:8000/api/auth/register"
+BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:8000")
+REGISTER_URL = f"{BASE_URL}/api/auth/register"
 
 engine = create_engine(DATABASE_URL)
 fake = Faker()
+
+def sanitize_name(name: str) -> str:
+    return ''.join(c for c in name.lower() if c.isalnum() or c in ['_', '-'])
 
 def register_user(username, email, password="Test1234!"):
     try:
@@ -22,7 +27,7 @@ def register_user(username, email, password="Test1234!"):
             "username": username,
             "email": email,
             "password": password
-        })
+        }, timeout=5)
         if res.status_code in (200, 201):
             print(f"✅ Registered {email}")
             return res.json().get("id")
@@ -40,7 +45,7 @@ def seed_users_and_merchants(session, user_count=300, merchant_count=150, themes
     user_ids = []
     for _ in range(user_count):
         name = fake.unique.first_name()
-        username = f"{name.lower()}_{uuid4().hex[:4]}"
+        username = f"{sanitize_name(name)}_{uuid4().hex[:4]}"
         email = f"{username}@example.com"
         user_id = register_user(username, email)
         if user_id:
@@ -51,26 +56,27 @@ def seed_users_and_merchants(session, user_count=300, merchant_count=150, themes
     merchants = []
     merchant_user_ids = []
     for _ in range(merchant_count):
-        name = fake.unique.company()
-        username = f"{name.lower().replace(' ', '_')}_{uuid4().hex[:4]}"
+        company_name = fake.unique.company()
+        username = f"{sanitize_name(company_name)}_{uuid4().hex[:4]}"
         email = f"{username}@merchant.com"
         user_id = register_user(username, email)
-        if user_id:
-            merchant = Merchant(
-                id=str(uuid4()),
-                user_id=user_id,
-                name=name,
-                description=fake.catch_phrase(),
-                location=fake.city(),
-                category=random.choice(list(MerchantCategory))
-            )
-            session.add(merchant)
-            merchants.append(merchant)
-            merchant_user_ids.append(user_id)
+        if not user_id:
+            continue  # ❗ skip failed registration
+        merchant = Merchant(
+            id=str(uuid4()),
+            user_id=user_id,
+            name=company_name,
+            description=fake.catch_phrase(),
+            location=fake.city(),
+            category=random.choice(list(MerchantCategory))
+        )
+        session.add(merchant)
+        merchants.append(merchant)
+        merchant_user_ids.append(user_id)
     session.commit()
     print(f"✅ Created {len(merchants)} merchants")
 
-    # ✅ Update role to 'merchant' for relevant users
+    # ✅ Update role to 'merchant'
     if merchant_user_ids:
         session.query(User).filter(User.id.in_(merchant_user_ids)).update(
             {User.role: 'merchant'}, synchronize_session=False

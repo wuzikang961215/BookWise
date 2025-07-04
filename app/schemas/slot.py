@@ -7,7 +7,6 @@ class SlotOut(BaseModel):
     start_time: datetime
     end_time: datetime
     capacity: int
-    booked_count: int
 
     class Config:
         from_attributes = True

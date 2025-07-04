@@ -77,6 +77,7 @@ class Theme(Base):
     merchant_id = Column(String, ForeignKey("merchants.id"), nullable=False)
     title = Column(String, nullable=False)
     description = Column(Text)
+    price = Column(Numeric, nullable=False, default=0)
 
     merchant = relationship("Merchant", back_populates="themes")
     slots = relationship("Slot", back_populates="theme")
