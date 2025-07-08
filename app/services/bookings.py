@@ -1,10 +1,10 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException
-from app.models import Booking, Payment, Slot, BookingStatus, PaymentStatus
-from app.schemas.booking import BookingCreateRequest, BookingOut  # ✅ 注意添加 BookingOut
+from fastapi import HTTPException, status
+from app.models import Booking, Payment, Slot, User, UserRole, BookingStatus, PaymentStatus
+from app.schemas.booking import BookingCreateRequest, BookingOut, BookingDetailOut, SlotBrief, ThemeBrief
 from app.crud import bookings as bookings_crud
-from app.crud import payments as payments_crud
+from app.crud import payment as payments_crud
 from app.services.payments import kickoff_payment_intent
 import uuid
 
@@ -84,3 +84,56 @@ def create_booking_and_payment(db: Session, user_id: str, slot_id: str, booking_
         payment_method=payment.method,
         payment_status=payment.status
     )
+
+def get_detailed_bookings_for_user(user_id: str, db: Session):
+    bookings = (
+        db.query(Booking)
+        .filter(Booking.user_id == user_id)
+        .options(
+            joinedload(Booking.slot).joinedload(Slot.theme),
+            joinedload(Booking.payment)
+        )
+        .all()
+    )
+
+    return [
+        BookingDetailOut(
+            id=b.id,
+            status=b.status,
+            payment_method=b.payment.method if b.payment else None,
+            created_at=b.created_at,
+            payment_id=b.payment.id if b.payment else None,
+            payment_status=b.payment.status if b.payment else None,
+            slot=SlotBrief(
+                id=b.slot.id,
+                start_time=b.slot.start_time,
+                end_time=b.slot.end_time,
+                theme=ThemeBrief(
+                    id=b.slot.theme.id,
+                    title=b.slot.theme.title
+                )
+            )
+        )
+        for b in bookings
+    ]
+
+def fetch_confirmed_bookings_for_slot(
+        db: Session,
+        current_user: User,
+        slot_id: str
+    ) -> list[BookingDetailOut]:
+        slot = db.query(Slot).filter(Slot.id == slot_id).first()
+        if not slot:
+            raise HTTPException(status_code=404, detail="Slot not found")
+
+        # Authorization: merchant of the theme or admin
+        theme = slot.theme
+        if current_user.role == UserRole.admin:
+            pass
+        elif current_user.role == UserRole.merchant:
+            if not current_user.merchant_profile or current_user.merchant_profile.id != theme.merchant_id:
+                raise HTTPException(status_code=403, detail="You cannot access bookings for this slot.")
+        else:
+            raise HTTPException(status_code=403, detail="Only merchants or admins can view bookings.")
+
+        return bookings_crud.get_confirmed_bookings_by_slot(db, slot_id)

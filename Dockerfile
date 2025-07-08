@@ -1,17 +1,23 @@
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
 WORKDIR /app
 
-# 安装系统依赖
 RUN apt-get update && apt-get install -y build-essential
 
-# 安装依赖
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制源代码
-COPY . .
+COPY alembic.ini .
+COPY alembic alembic
+COPY entrypoint.sh /app/entrypoint.sh
 
-# 启动命令（Fly 会识别）
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# ✅ 关键补充：加入整个项目代码
+COPY app app
+COPY main.py .
+
+RUN chmod +x /app/entrypoint.sh
+
+ENTRYPOINT ["/app/entrypoint.sh"]

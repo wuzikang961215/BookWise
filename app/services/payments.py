@@ -1,8 +1,10 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
-from app.models import Payment, Booking, PaymentStatus, BookingStatus
+from fastapi import HTTPException, status
+from app.models import Payment, Booking, PaymentStatus, BookingStatus, User, UserRole
 from app.db import SessionLocal
+from app.tasks.celery_app import celery_app  # 👈 force app registration
 from app.tasks.stripe import create_stripe_payment_intent
+import os
 
 
 def kickoff_payment_intent(payment_id: str, booking_id: str, user_id: str, amount: float):

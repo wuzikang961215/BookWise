@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Boolean, Text, Numeric, Enum, CheckConstraint
+from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Boolean, Text, Numeric, Enum, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
 import enum
@@ -79,6 +79,10 @@ class Theme(Base):
     description = Column(Text)
     price = Column(Numeric, nullable=False, default=0)
 
+    __table_args__ = (
+        UniqueConstraint("merchant_id", "title", name="uq_merchant_title"),
+    )
+
     merchant = relationship("Merchant", back_populates="themes")
     slots = relationship("Slot", back_populates="theme")
     reviews = relationship("Review", back_populates="theme")
@@ -97,6 +101,7 @@ class Slot(Base):
 
     __table_args__ = (
         CheckConstraint("capacity >= 0", name="check_slot_capacity_non_negative"),
+        UniqueConstraint("theme_id", "start_time", "end_time", name="uq_theme_slot_time")
     )
 
 class Booking(Base):

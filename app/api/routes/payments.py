@@ -6,6 +6,7 @@ from app.db import get_db
 from app.schemas.payment import PaymentOut
 from app.services.payments import get_payment_by_booking_id
 from app.core.security import get_current_user
+from app.models import User
 
 router = APIRouter()
 

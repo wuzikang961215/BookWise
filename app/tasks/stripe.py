@@ -1,13 +1,18 @@
 import os
 import requests
 import logging
-from celery import shared_task
+from app.tasks.celery_app import celery_app  # 👈 force app registration
 from app.models import Payment
 from app.db import SessionLocal
 
 STRIPE_URL = os.getenv("STRIPE_URL", "https://stripe-small-leaf-5404.fly.dev")
 
-@shared_task(bind=True, max_retries=5, default_retry_delay=10)
+@celery_app.task(
+    name="app.tasks.stripe.create_stripe_payment_intent",  # 👈 this line is key
+    bind=True,
+    max_retries=5,
+    default_retry_delay=10
+)
 def create_stripe_payment_intent(self, payment_id: str, booking_id: str, user_id: str, amount: float):
     idempotency_key = f"{user_id}-{booking_id}-{payment_id}"
 

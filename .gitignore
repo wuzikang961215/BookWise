@@ -31,3 +31,5 @@ coverage.xml
 
 # Database
 pgdata/
+
+fly.worker.toml
