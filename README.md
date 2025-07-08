@@ -1,12 +1,45 @@
 # 📘 BookWise: Merchant Booking Platform (FastAPI + PostgreSQL)
 
-A production-grade backend system for managing merchant-based services (escape rooms, classes, etc) — with robust booking, payment, review, and role management.
+**BookWise is an online booking and payment system for real-world services like escape rooms, massage, or barbers.**
+
+A production-grade backend system for managing merchant-based services (escape rooms, studios, barbershops, etc) — with robust booking, payment, review, and role management.
 
 > ✅ Designed to scale: tested with 170K+ users and 1.6M+ simulated bookings  
 > 🔧 Tech stack: FastAPI · PostgreSQL · Redis · Celery · Stripe · Docker  
 > 🚀 Deployed on Fly.io — [Live API](https://bookwise.fly.dev/docs#/)
 
 ---
+
+## 🧭 Why I built BookWise
+
+In Australia, I observed that many merchants — such as escape rooms, massage shops, and barbers — still rely on phone calls, Excel sheets, or WeChat to manage bookings. This manual workflow leads to issues like:
+
+- ❌ Overbooked time slots  
+- ❌ Miscommunication between staff  
+- ❌ Missed or untracked payments
+
+**BookWise** was created to solve that. It automates the full booking workflow:
+
+- ✅ Merchants create services and available time slots  
+- ✅ Users browse, book, pay, and review  
+- ✅ Admins manage everything centrally
+
+---
+
+## 👥 Who uses BookWise?
+
+### 🧑 Users
+- Browse merchants and filter by categories (KTV, massage, escape rooms, etc.)
+- View services (themes) and book open time slots
+- Register and log in to book, pay, cancel, and review
+
+### 🧑‍💼 Merchants
+- Use their account to create/manage themes and time slots
+- View all bookings and payments per slot
+- Access (future) stats like most booked themes or top customers
+
+### 👑 Admins
+- Manage all merchants, users, bookings, payments, reviews, and system data
 
 ## 🌟 Key Features
 
