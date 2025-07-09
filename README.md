@@ -276,21 +276,6 @@ sequenceDiagram
 
 ---
 
-### 🗂 Booking Status Lifecycle
-
-```mermaid
-stateDiagram-v2
-  [*] --> pending
-  pending --> confirmed: Payment confirmed via webhook
-  pending --> cancelled: User cancels before slot start
-  confirmed --> refunded: Admin/merchant triggers refund
-  cancelled --> [*]
-  refunded --> [*]
-```
-
-> 🧠 Bookings begin in `pending` state upon creation. Status transitions are managed via Stripe webhooks or user/admin actions. Duplicate state transitions are prevented via idempotency checks.
-
----
 
 ## 🧠 Design Highlights
 
