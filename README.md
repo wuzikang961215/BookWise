@@ -176,51 +176,44 @@ sequenceDiagram
 
 ---
 
-### 💸 Booking + Payment Flow
+### 💸 Booking Flow
 
 ```mermaid
-flowchart TD
-  subgraph Client
-    A[User books a slot] --> B[Send booking request]
-    K[User confirms payment]
-  end
+sequenceDiagram
+  participant User
+  participant BookWiseAPI as BookWise API
+  participant DB as PostgreSQL
+  participant Redis
+  participant Celery
+  participant Stripe as Mock Stripe
+  participant Webhook as Webhook Handler
 
-  subgraph Backend
-    B --> C[Check slot availability]
-    C --> D[Start DB Transaction]
-    D --> E[Create booking (pending)]
-    E --> F[Create payment (pending)]
-    F --> G[Commit Transaction]
-    G --> H[Enqueue Celery Task]
-  end
+  User->>BookWiseAPI: POST /bookings
+  BookWiseAPI->>DB: Begin transaction
+  BookWiseAPI->>DB: Check slot availability
+  BookWiseAPI->>DB: Create booking (pending)
+  BookWiseAPI->>DB: Create payment (pending)
+  BookWiseAPI->>DB: Commit transaction
+  BookWiseAPI->>Redis: Enqueue create_intent_task
 
-  subgraph Redis Queue
-    H --> I[Celery picks up task]
-  end
+  Note over Redis,Celery: Async task with retry
 
-  subgraph Celery Worker
-    I --> J[Call POST /v1/payment_intents]
-    J --> K2[Receive payment_intent_id]
-    K2 --> L[Update payment with intent_id]
-  end
+  Redis-->>Celery: create_intent_task
+  Celery->>Stripe: POST /v1/payment_intents
+  Stripe-->>Celery: Return payment_intent_id
+  Celery->>DB: Update payment with intent_id
 
-  K --> M[Call confirm endpoint]
-  M --> N[Stripe triggers webhook]
+  Note over User,BookWiseAPI: User completes payment
 
-  subgraph Webhook Handler
-    N --> O[Receive /webhooks/stripe]
-    O --> P[Update booking = confirmed]
-    O --> Q[Update payment = success]
-  end
+  User->>Stripe: POST /v1/payment_intents/:id/confirm
+  Stripe->>Webhook: POST /webhooks/stripe
+  Webhook->>DB: Set booking = confirmed
+  Webhook->>DB: Set payment = success
 ```
 
-> 🧱 DB transaction: Steps C–G  
-> ⏳ Async: Steps H–L via Redis + Celery  
-> 📡 Webhook-driven finalization: Steps N–Q  
-> 🎯 Key abstractions: User → FastAPI → DB + Redis → Stripe → Webhook
-
-
-
+> 🧱 Booking + Payment creation is wrapped in a DB transaction  
+> ⏳ Intent generation is async (Redis → Celery → Stripe)  
+> 📡 Final confirmation handled via webhook
 
 
 ## ⚙️ Tech Stack
