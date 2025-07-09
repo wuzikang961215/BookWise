@@ -51,8 +51,8 @@ Handles user registration, login, and refresh token flow using JWT.
 | Endpoint          | Method | Purpose                                 | Role    |
 |-------------------|--------|-----------------------------------------|---------|
 | `/auth/register`  | POST   | Register a new user                     | Public  |
-| `/auth/login`     | POST   | Login and receive access + refresh JWT | Public  |
-| `/auth/refresh`   | POST   | Refresh access token using refresh JWT | Requires refresh token |
+| `/auth/login`     | POST   | Login and receive access + refresh JWT  | Public  |
+| `/auth/refresh`   | POST   | Refresh access token using refresh JWT  | Requires refresh token |
 
 ---
 
@@ -66,6 +66,47 @@ Fetch user info, personal bookings, and admin-only user lookups.
 | `/users/`              | GET    | Get list of all users                         | Admin only   |
 | `/users/{user_id}`     | GET    | Get any user by ID                            | Admin only   |
 
+---
+
+### 🏪 Merchant Service  
+Allows users to become merchants and view merchant directories.
+
+| Endpoint              | Method | Purpose                                           | Role         |
+|-----------------------|--------|---------------------------------------------------|--------------|
+| `/merchants`          | GET    | List all merchants, with optional category filter | Public       |
+| `/merchants`          | POST   | Create merchant profile (user becomes merchant)   | User         |
+
+---
+
+### 🎭 Theme Service  
+Merchants can manage their services (themes), such as escape room types or massage offerings.
+
+| Endpoint                          | Method | Purpose                                   | Role      |
+|-----------------------------------|--------|-------------------------------------------|-----------|
+| `/merchants/{merchant_id}/themes`          | GET    | Get all themes under a merchant           | Public    |
+| `/merchants/{merchant_id}/themes`          | POST   | Create a new theme under a merchant  | Merchant / Admin |
+
+---
+
+### ⏱️ Slot Service  
+Merchants create and manage time slots under each theme.
+
+| Endpoint                               | Method | Purpose                                    | Role      |
+|----------------------------------------|--------|--------------------------------------------|-----------|
+| `/themes/{theme_id}/slots`                   | GET    | List all slots under a theme               | Public    |
+| `/themes/{theme_id}/slots`                   | POST   | Create a new slot under a theme            | Merchant / Admin  |
+| `/slots/{theme_id}/availability`             | GET    | Check slot availability (capacity status)  | Public    |
+
+---
+
+### 📅 Booking Service  
+Users book available slots, merchants can view confirmed bookings.
+
+| Endpoint                           | Method | Purpose                                              | Role       |
+|------------------------------------|--------|------------------------------------------------------|------------|
+| `/slots/{slot_id}/book`                 | POST   | User books a slot and triggers payment intent        | User / Merchant / Admin      |
+| `/slots/{slot_id}/bookings`            | GET    | Merchant views confirmed bookings under the slot     | Merchant / Admin  |
+| `/slots/{slot_id}/booking-count`       | GET    | View number of confirmed bookings + slot capacity    | Public     |
 
 
 ---
