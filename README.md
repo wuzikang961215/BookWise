@@ -176,6 +176,42 @@ sequenceDiagram
 
 ---
 
+---
+
+### 💸 Booking + Payment Flow
+
+```mermaid
+flowchart TD
+  A[User books slot] --> B[Check slot availability]
+  B --> C[Create booking (pending)]
+  C --> D[Create payment (pending, empty intent_id)]
+  D --> E[Commit DB transaction]
+
+  E --> F[Enqueue async task (Redis)]
+  F --> G[Celery picks up task]
+  G --> H[POST /v1/payment_intents (Mock Stripe)]
+
+  H --> I[Stripe returns payment_intent_id]
+  I --> J[Update payment record in DB]
+
+  J --> K[User confirms via frontend]
+  K --> L[POST /v1/payment_intents/{id}/confirm (Mock Stripe)]
+
+  L --> M[Stripe triggers webhook]
+  M --> N[POST /api/webhooks/stripe]
+
+  N --> O[Update booking = confirmed]
+  N --> P[Update payment = success]
+```
+
+> 🧱 Steps A–E are wrapped in a DB transaction  
+> ⏳ Steps F–J are asynchronous and retry-safe via Celery  
+> 📡 Steps K–P are triggered by the user and completed via webhook
+
+---
+
+
+
 
 ## ⚙️ Tech Stack
 
