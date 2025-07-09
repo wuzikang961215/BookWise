@@ -141,6 +141,42 @@ This is a mock webhook endpoint used to simulate Stripe’s payment confirmation
 > ⚠️ This endpoint is for **internal development use only**. It does not perform signature verification and is not intended for production Stripe usage.
 
 
+---
+
+## 🔄 System Flow Diagrams
+
+### 🔐 Refresh Token Flow
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant BookWise API
+  participant Database
+
+  User->>BookWise API: POST /auth/login (email + password)
+  BookWise API->>Database: Validate credentials
+  BookWise API-->>User: Return Access Token + Refresh Token
+  BookWise API->>Database: Store refresh token
+
+  Note over User, BookWise API: (15 minutes later...)
+
+  User->>BookWise API: POST /auth/refresh (with refresh token)
+  BookWise API->>Database: Compare refresh token
+  alt Valid and not expired
+    BookWise API-->>User: Return new Access + Refresh Token
+    BookWise API->>Database: Update refresh token
+  else Invalid or expired
+    BookWise API-->>User: 401 Unauthorized
+  end
+```
+
+> ⏳ Access tokens expire every 15 minutes  
+> ♻️ Refresh tokens are valid for 30 days and rotated with every use  
+> 🗃️ Expired refresh tokens remain in the database and are ignored on validation
+
+---
+
+
 ## ⚙️ Tech Stack
 
 | Category       | Tools                                      |
