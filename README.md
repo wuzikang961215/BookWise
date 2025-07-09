@@ -176,39 +176,49 @@ sequenceDiagram
 
 ---
 
----
-
 ### 💸 Booking + Payment Flow
 
 ```mermaid
 flowchart TD
-  A[User books slot] --> B[Check slot availability]
-  B --> C[Create booking (pending)]
-  C --> D[Create payment (pending, empty intent_id)]
-  D --> E[Commit DB transaction]
+  subgraph Client
+    A[User books a slot] --> B[Send booking request]
+    K[User confirms payment]
+  end
 
-  E --> F[Enqueue async task (Redis)]
-  F --> G[Celery picks up task]
-  G --> H[POST /v1/payment_intents (Mock Stripe)]
+  subgraph Backend
+    B --> C[Check slot availability]
+    C --> D[Start DB Transaction]
+    D --> E[Create booking (pending)]
+    E --> F[Create payment (pending)]
+    F --> G[Commit Transaction]
+    G --> H[Enqueue Celery Task]
+  end
 
-  H --> I[Stripe returns payment_intent_id]
-  I --> J[Update payment record in DB]
+  subgraph Redis Queue
+    H --> I[Celery picks up task]
+  end
 
-  J --> K[User confirms via frontend]
-  K --> L[POST /v1/payment_intents/{id}/confirm (Mock Stripe)]
+  subgraph Celery Worker
+    I --> J[Call POST /v1/payment_intents]
+    J --> K2[Receive payment_intent_id]
+    K2 --> L[Update payment with intent_id]
+  end
 
-  L --> M[Stripe triggers webhook]
-  M --> N[POST /api/webhooks/stripe]
+  K --> M[Call confirm endpoint]
+  M --> N[Stripe triggers webhook]
 
-  N --> O[Update booking = confirmed]
-  N --> P[Update payment = success]
+  subgraph Webhook Handler
+    N --> O[Receive /webhooks/stripe]
+    O --> P[Update booking = confirmed]
+    O --> Q[Update payment = success]
+  end
 ```
 
-> 🧱 Steps A–E are wrapped in a DB transaction  
-> ⏳ Steps F–J are asynchronous and retry-safe via Celery  
-> 📡 Steps K–P are triggered by the user and completed via webhook
+> 🧱 DB transaction: Steps C–G  
+> ⏳ Async: Steps H–L via Redis + Celery  
+> 📡 Webhook-driven finalization: Steps N–Q  
+> 🎯 Key abstractions: User → FastAPI → DB + Redis → Stripe → Webhook
 
----
 
 
 
