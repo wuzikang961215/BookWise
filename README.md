@@ -216,6 +216,21 @@ sequenceDiagram
 > 📡 Final confirmation handled via webhook
 
 
+---
+
+## 🧠 Design Highlights
+
+- 🔐 **Refresh token storage**: Refresh tokens are stored and validated in the database, allowing for secure session control and token invalidation.
+- 🔁 **Token rotation**: Supports long-term login sessions by issuing new access and refresh tokens securely via the refresh flow.
+- 🧾 **Stripe idempotency**: All payment-related operations are idempotent using a UUID-based `idempotency_key` to ensure safe retries and prevent duplicates.
+- 🧱 **Atomic booking + payment creation**: Booking and initial payment records are created in a single database transaction to prevent inconsistent states.
+- ⏳ **Async payment intent generation**: Stripe payment intent creation is deferred to an asynchronous Celery task, queued via Redis.
+- ⚙️ **Background worker updates**: A Celery worker picks up delayed jobs and updates the `payment_intent_id` in the database asynchronously.
+- 🌐 **End-to-end payment lifecycle**: The full flow—from booking to payment confirmation and webhook handling—is production-deployed and fully automated.
+- 🧮 **Normalized SQL schema**: All entities follow a clean relational design with foreign keys, uniqueness constraints, and optimized query paths.
+- 🚦 **Role-based route control**: Access is restricted by roles (`User`, `Merchant`, `Admin`) with fine-grained permission checks (e.g. merchants can only manage their own resources).
+
+---
 ## ⚙️ Tech Stack
 
 | Category       | Tools                                      |
