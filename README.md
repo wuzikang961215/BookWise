@@ -231,85 +231,63 @@ sequenceDiagram
 - 🚦 **Role-based route control**: Access is restricted by roles (`User`, `Merchant`, `Admin`) with fine-grained permission checks (e.g. merchants can only manage their own resources).
 
 ---
-## ⚙️ Tech Stack
 
-| Category       | Tools                                      |
-|----------------|---------------------------------------------|
-| Web API        | FastAPI, Pydantic                          |
-| DB Layer       | PostgreSQL, SQLAlchemy, Alembic            |
-| Auth           | JWT (access/refresh), bcrypt               |
-| Async / Jobs   | Celery, Redis                              |
-| Payments       | Stripe (intent + webhook + idempotency)    |
-| DevOps         | Docker, Fly.io                             |
-| Dev Tools      | Postman                    |
 
----
+## 📊 Database Schema
 
-## 🗂️ Database Design (ERD)
+BookWise uses a **normalized relational schema** to ensure data consistency, performance, and extensibility. The key design principles include:
 
-> ![ERD Image](link-to-your-image-or-dbdiagram)
+- ✅ **1-to-1 and 1-to-many relationships** (e.g. User ➝ Merchant, Theme ➝ Slot)
+- 🎯 **Composite uniqueness constraints** to prevent double-booking and duplicate content
+- 🔐 **Role inheritance via user-role-enforced logic** (e.g. only users can become merchants)
+- 🔁 **Bidirectional foreign key bindings** to support reverse lookups and efficient JOINs
 
-**Key Entities:**
-- `User` → may become `Merchant`
-- `Merchant` → owns `Themes` (services like escape rooms)
-- `Theme` → has multiple `Slots`
-- `Slot` → can be booked → `Booking` / `Participant`
-- `Review` → linked to `(User, Theme)` pair
+Key tables include:
 
----
+- `users`: stores login credentials, roles, and refresh tokens  
+- `merchants`: linked 1-to-1 with users, stores business profile and category  
+- `themes`: merchant-owned services (e.g. escape room theme or haircut style)  
+- `slots`: time slots under a theme, with start/end time and capacity  
+- `bookings`: connects users and slots, with a status lifecycle  
+- `payments`: one per booking; stores method, amount, status, and intent ID  
+- `reviews`: each user can leave one review per theme per booking
 
-## 🔄 Booking Flow Diagram
+📷 Below is a visual representation of the schema:
 
-```mermaid
-graph TD
-User -->|Login/Register| App
-App -->|Browse Themes| /themes
-User -->|Join Slot| /slots/:id/join
-Merchant -->|View Participants| /slots/:id/participants
-Merchant -->|Confirm Attendance| /attendance
-User -->|Review Theme| /reviews
-```
+![BookWise DB Schema](https://github.com/wuzikang961215/BookWise/raw/main/Bookwise%20DB%20Schema.jpg)
+
 
 ---
 
-## 🔌 API Examples
+## ✅ Next Features to Build
 
-| Endpoint                  | Method | Description             |
-|---------------------------|--------|-------------------------|
-| `/auth/register`          | POST   | User signup             |
-| `/themes`                 | GET    | List all themes         |
-| `/slots/:id/join`         | POST   | Book a slot             |
-| `/slots/:id/participants` | GET    | List participants       |
-| `/reviews`                | POST   | Submit theme review     |
-| `/payments/create`        | POST   | Stripe intent           |
+### 🔁 Booking Management & Refunds
+- Cancel booking (user-initiated before slot starts)
+- Simulate or handle refunds (update booking + payment status)
+- Optional: async refund task via Celery
 
-📎 [Postman Collection](#)  
-📎 [cURL Examples](#)
+### 🗑️ Deletion & Cleanup
+- Delete theme (only if no active slots/bookings)
+- Delete slot (only if no confirmed bookings)
+- Optional: implement soft delete (`is_deleted` flag)
 
----
+### 📊 Analytics & Reporting
+**Merchant-side:**
+- Top themes by bookings (last 7/30 days)
+- Top customers by activity or payment
+- Slot occupancy rates (utilization)
 
-## 🧠 Design Highlights
+**Admin-side:**
+- Revenue by merchant/category
+- Review rating distribution
+- Active users, repeat bookings, popular slots
 
-- Optimized SQL with index testing, JOIN patterns, and EXPLAIN ANALYZE
-- Role-aware permission logic (admin vs merchant vs user routes)
-- Strict data model: enforced FK constraints, 1–1 review per theme
-- Modular codebase: fully separated concerns (router/service/crud)
-- Async retry-safe payment handling via Celery
-
----
-
-## 🚀 Deployment & Usage
-
-- Deployed with Docker + Fly.io
-- Uses Upstash Redis for async job backend
-- Environment variables: `.env.example` included
-- Live backend link: [https://bookwise.fly.dev](https://bookwise.fly.dev)
-
----
-
-## 📸 Screenshots / Demo (optional)
-
-> _[Insert screenshot or GIF of flow / schema visualizer / logs / etc]_
+### 💡 Future Enhancements
+- Admin UI panel for data management
+- AI-based recommendations (“Users also booked…”)
+- Email confirmations/reminders
+- Recurring slots (e.g. every Friday 7pm)
+- Invoicing (generate downloadable PDFs)
 
 ---
 
