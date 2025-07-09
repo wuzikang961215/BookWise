@@ -61,8 +61,8 @@ Fetch user info, personal bookings, and admin-only user lookups.
 
 | Endpoint               | Method | Purpose                                        | Role        |
 |------------------------|--------|------------------------------------------------|-------------|
-| `/users/me`            | GET    | Get current logged-in user's profile          | User / Merchant / Admin |
-| `/users/me/bookings`   | GET    | Get current user's booking history            | User / Merchant / Admin       |
+| `/users/me`            | GET    | Get current logged-in user's profile          | User |
+| `/users/me/bookings`   | GET    | Get current user's booking history            | User    |
 | `/users/`              | GET    | Get list of all users                         | Admin only   |
 | `/users/{user_id}`     | GET    | Get any user by ID                            | Admin only   |
 
@@ -104,12 +104,42 @@ Users book available slots, merchants can view confirmed bookings.
 
 | Endpoint                           | Method | Purpose                                              | Role       |
 |------------------------------------|--------|------------------------------------------------------|------------|
-| `/slots/{slot_id}/book`                 | POST   | User books a slot and triggers payment intent        | User / Merchant / Admin      |
+| `/slots/{slot_id}/book`                 | POST   | User books a slot and triggers payment intent        | User     |
 | `/slots/{slot_id}/bookings`            | GET    | Merchant views confirmed bookings under the slot     | Merchant / Admin  |
 | `/slots/{slot_id}/booking-count`       | GET    | View number of confirmed bookings + slot capacity    | Public     |
 
 
 ---
+
+### 💳 Payment Service  
+Handles payment records linked to bookings. Typically queried after booking is created.
+
+| Endpoint                             | Method | Purpose                                                              | Role    |
+|--------------------------------------|--------|----------------------------------------------------------------------|---------|
+| `/bookings/{booking_id}/payment`     | GET    | Get payment info for a booking (user must own booking)              | User    |
+
+---
+
+### ✍️ Review Service  
+Users can review themes they’ve experienced. One review per user per theme.
+
+| Endpoint                             | Method | Purpose                                                                 | Role    |
+|--------------------------------------|--------|-------------------------------------------------------------------------|---------|
+| `/themes/{theme_id}/review`          | POST   | Submit a review (must have completed + paid booking for that theme)    | User    |
+| `/themes/{theme_id}/reviews`         | GET    | Get all reviews for a theme                                            | Public  |
+
+---
+
+### 🧪 Stripe Webhook (Mock)
+
+This is a mock webhook endpoint used to simulate Stripe’s payment confirmation flow during development/testing.
+
+| Endpoint               | Method | Purpose                                          | Role     |
+|------------------------|--------|--------------------------------------------------|----------|
+| `/webhooks/stripe`     | POST   | Receive mock Stripe webhook payloads to simulate payment success | Internal (Mock) |
+
+> ⚠️ This endpoint is for **internal development use only**. It does not perform signature verification and is not intended for production Stripe usage.
+
 
 ## ⚙️ Tech Stack
 
