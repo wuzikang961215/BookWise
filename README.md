@@ -41,16 +41,32 @@ In Australia, I observed that many merchants — such as escape rooms, massage s
 ### 👑 Admins
 - Manage all merchants, users, bookings, payments, reviews, and system data
 
-## 🌟 Key Features
+---
 
-- 🧾 Booking flow: Merchant → Service (Theme) → Slot → Booking
-- 🔐 Role-based access: Admin · Merchant · User
-- 📅 Slot availability enforcement + overbooking prevention
-- 💬 Review system: one-review-per-theme per user
-- 💳 Stripe integration (idempotency + webhook)
-- 🚦 JWT auth + refresh token
-- 📦 Async background jobs via Celery (e.g. payment retry)
-- 🧱 Modular clean architecture (Router ➝ Service ➝ CRUD ➝ Model)
+## 🛠️ Core Services & API Overview
+
+### 🔐 Auth Service  
+Handles user registration, login, and refresh token flow using JWT.
+
+| Endpoint          | Method | Purpose                                 | Role    |
+|-------------------|--------|-----------------------------------------|---------|
+| `/auth/register`  | POST   | Register a new user                     | Public  |
+| `/auth/login`     | POST   | Login and receive access + refresh JWT | Public  |
+| `/auth/refresh`   | POST   | Refresh access token using refresh JWT | Requires refresh token |
+
+---
+
+### 👤 User Service  
+Fetch user info, personal bookings, and admin-only user lookups.
+
+| Endpoint               | Method | Purpose                                        | Role        |
+|------------------------|--------|------------------------------------------------|-------------|
+| `/users/me`            | GET    | Get current logged-in user's profile          | User / Merchant / Admin |
+| `/users/me/bookings`   | GET    | Get current user's booking history            | User / Merchant / Admin       |
+| `/users/`              | GET    | Get list of all users                         | Admin only   |
+| `/users/{user_id}`     | GET    | Get any user by ID                            | Admin only   |
+
+
 
 ---
 
