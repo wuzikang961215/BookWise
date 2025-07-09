@@ -43,6 +43,47 @@ In Australia, I observed that many merchants — such as escape rooms, massage s
 
 ---
 
+### 🧑‍💻 Frontend Engineer Guide: User Stories
+
+The following user stories describe how different roles interact with the system. Use these to plan page structure, UI flows, and component responsibilities.
+
+---
+
+#### 🧑 Users (Customers)
+
+| Page / Flow | Description |
+|-------------|-------------|
+| **Home Page** | Users land on a homepage that lists all merchants, optionally filtered by category (e.g., KTV, massage, barbershop). |
+| **Merchant Detail Page** | Clicking a merchant shows their available services (themes), such as different escape room types or massage packages. |
+| **Theme Detail Page** | Clicking a theme shows available time slots with their remaining capacity, along with past user reviews. |
+| **Slot Booking Page** | If a slot is not full, the user can book it. |
+| **Mock Payment Page** | After booking, users are redirected to a Stripe-style mock payment page, where they enter card details and click “Pay” to confirm the payment. |
+| **Review Page** | After successfully booking and paying, the user can write a review for the theme they experienced. |
+| **My Bookings Page** | Users can view their past bookings and payment history, including whether each was successful. |
+| **Authentication** | After logging in, users stay authenticated with token auto-refresh running every 15 minutes — the frontend should refresh tokens silently to keep users logged in. |
+
+---
+
+#### 🧑‍💼 Merchants
+
+| Page / Flow | Description |
+|-------------|-------------|
+| **Merchant Dashboard** | Merchants can view and manage all of their services (themes). |
+| **Slot Management Page** | For each theme, merchants can create, edit, or remove available time slots. |
+| **Booking Overview** | For any slot, merchants can view the list of confirmed bookings (e.g., names, times). |
+
+---
+
+#### 👑 Admins
+
+| Page / Flow | Description |
+|-------------|-------------|
+| **User Management Panel** | Admins can browse and inspect all user profiles. |
+| **Global Theme/Slot Panel** | Admins can create or edit themes and slots for any merchant in the system. |
+| **(Optional) Admin Dashboard** | In the future, admins may view analytics like booking volume, top customers, or review trends. |
+
+---
+
 ## 🛠️ Core Services & API Overview
 
 ### 🔐 Auth Service  
