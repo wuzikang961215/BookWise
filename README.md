@@ -152,6 +152,7 @@ Users book available slots, merchants can view confirmed bookings.
 
 ---
 
+
 ### 💳 Payment Service  
 Handles payment records linked to bookings. Typically queried after booking is created.
 
@@ -171,18 +172,34 @@ Users can review themes they’ve experienced. One review per user per theme.
 
 ---
 
-### 🧪 Stripe Webhook (Mock)
+### 📡 Stripe Webhook
 
-This is a mock webhook endpoint used to simulate Stripe’s payment confirmation flow during development/testing.
+This production endpoint receives payment confirmation from the mock Stripe API and finalizes the booking flow by updating both the booking and payment records.
 
-| Endpoint               | Method | Purpose                                          | Role     |
-|------------------------|--------|--------------------------------------------------|----------|
-| `/webhooks/stripe`     | POST   | Receive mock Stripe webhook payloads to simulate payment success | Internal (Mock) |
+| Endpoint               | Method | Purpose                                                                      | Role     |
+|------------------------|--------|------------------------------------------------------------------------------|----------|
+| `/webhooks/stripe`     | POST   | Confirm payment success and update booking status to `confirmed`             | Internal (Stripe-triggered) |
 
-> ⚠️ This endpoint is for **internal development use only**. It does not perform signature verification and is not intended for production Stripe usage.
+> ✅ This endpoint is deployed in **production** and plays a key role in completing the payment lifecycle.
 
 
 ---
+
+### 🧪 Mock Stripe API (Production)
+
+This mock Stripe service handles payment intent creation and confirmation in production, enabling a full end-to-end booking + payment flow without real Stripe credentials.
+
+| Endpoint                                        | Method | Purpose                                                      | Role          |
+|-------------------------------------------------|--------|--------------------------------------------------------------|---------------|
+| `/v1/payment_intents`                           | POST   | Create a mock payment intent with idempotency support        | Internal      |
+| `/v1/payment_intents/{intent_id}/confirm`       | POST   | Simulate payment confirmation and trigger BookWise webhook   | Internal      |
+
+> 🔁 Supports Redis-based idempotency + webhook retry logic  
+> 🧪 Designed for realistic production testing of the booking/payment lifecycle
+
+
+---
+
 
 ## 🔄 System Flow Diagrams
 
